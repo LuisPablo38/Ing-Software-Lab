@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Clientes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            text-align: center;
+        }
+        .form-container, .result-container {
+            margin: 20px 0;
+        }
+        input, select, button {
+            display: block;
+            margin: 10px 0;
+            padding: 10px;
+            width: 100%;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Gestión de Clientes</h1>
+
+    <!-- Formulario para Crear Cliente -->
+    <div class="form-container">
+        <h2>Crear Cliente</h2>
+        <form id="crearClienteForm">
+            <input type="text" id="nombre" placeholder="Nombre Completo" required>
+            <input type="email" id="email" placeholder="Correo Electrónico" required>
+            <input type="tel" id="telefono" placeholder="Teléfono (Ej. +1-123-456-7890)" required>
+            <input type="text" id="empresa" placeholder="Empresa (Opcional)">
+            <input type="text" id="pais" placeholder="País" required>
+            <input type="date" id="fechaContacto" required>
+            <select id="estado" required>
+                <option value="" disabled selected>Estado del Cliente</option>
+                <option value="Nuevo">Nuevo</option>
+                <option value="En negociación">En negociación</option>
+                <option value="Ganado">Ganado</option>
+                <option value="Perdido">Perdido</option>
+            </select>
+            <button type="submit">Crear Cliente</button>
+        </form>
+    </div>
+
+    <!-- Botón para Obtener Clientes -->
+    <div class="form-container">
+        <h2>Obtener Todos los Clientes</h2>
+        <button id="obtenerClientesBtn">Ver Clientes</button>
+        <table id="clientesTable" style="display: none;">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Email</th>
+                    <th>Teléfono</th>
+                    <th>Empresa</th>
+                    <th>País</th>
+                    <th>Fecha de Contacto</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="clientesTableBody"></tbody>
+        </table>
+    </div>
+
+    <script>
+        // URL base de la API
+        const apiBaseUrl = 'http://localhost:3000/clientes';
+
+        // Crear cliente
+        document.getElementById('crearClienteForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const nombre = document.getElementById('nombre').value;
+            const email = document.getElementById('email').value;
+            const telefono = document.getElementById('telefono').value;
+            const empresa = document.getElementById('empresa').value;
+            const pais = document.getElementById('pais').value;
+            const fechaContacto = document.getElementById('fechaContacto').value;
+            const estado = document.getElementById('estado').value;
+
+            const nuevoCliente = {
+                nombre, email, telefono, empresa, pais, fechaContacto, estado
+            };
+
+            try {
+                const response = await fetch(apiBaseUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(nuevoCliente)
+                });
+
+                if (response.ok) {
+                    alert('Cliente creado con éxito');
+                    document.getElementById('crearClienteForm').reset();
+                    obtenerClientes();
+                } else {
+                    const errorData = await response.json();
+                    alert(`Error al crear cliente: ${errorData.error}`);
+                }
+            } catch (error) {
+                alert('Error al conectar con la API');
+            }
+        });
+
+        // Obtener todos los clientes
+        document.getElementById('obtenerClientesBtn').addEventListener('click', obtenerClientes);
+
+        async function obtenerClientes() {
+            try {
+                const response = await fetch(apiBaseUrl);
+                const clientes = await response.json();
+
+                const tableBody = document.getElementById('clientesTableBody');
+                tableBody.innerHTML = '';
+
+                clientes.forEach(cliente => {
+                    const row = document.createElement('tr');
+
+                    row.innerHTML = `
+                        <td>${cliente.id}</td>
+                        <td>${cliente.nombre}</td>
+                        <td>${cliente.email}</td>
+                        <td>${cliente.telefono}</td>
+                        <td>${cliente.empresa || ''}</td>
+                        <td>${cliente.pais}</td>
+                        <td>${cliente.fechaContacto}</td>
+                        <td>${cliente.estado}</td>
+                        <td>
+                            <button onclick="eliminarCliente(${cliente.id})">Eliminar</button>
+                        </td>
+                    `;
+
+                    tableBody.appendChild(row);
+                });
+
+                document.getElementById('clientesTable').style.display = 'table';
+            } catch (error) {
+                alert('Error al obtener los clientes');
+            }
+        }
+
+        // Eliminar cliente
+        async function eliminarCliente(id) {
+            if (!confirm('¿Estás seguro de eliminar este cliente?')) return;
+
+            try {
+                const response = await fetch(`${apiBaseUrl}/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    alert('Cliente eliminado con éxito');
+                    obtenerClientes();
+                } else {
+                    alert('Error al eliminar cliente');
+                }
+            } catch (error) {
+                alert('Error al conectar con la API');
+            }
+        }
+    </script>
+
+</body>
+</html>
