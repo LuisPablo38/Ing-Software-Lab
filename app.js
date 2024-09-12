@@ -131,7 +131,7 @@ app.delete('/clientes/:id', (req, res) => {
     }
 
     clientes.splice(clienteIndex, 1);
-    res.status(204).send();
+    res.status(200).json({ message: 'Cliente eliminado.' });
 });
 
 // Iniciar el servidor
